@@ -1,5 +1,5 @@
 use calamine::{open_workbook_auto, Data, Reader};
-use excel_processor::excel::process_file;
+use excel_gui_app::excel::process_file;
 use rust_xlsxwriter::Workbook;
 use std::fs;
 

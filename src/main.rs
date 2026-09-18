@@ -3,7 +3,9 @@
 use eframe::egui::{
     self, FontFamily, FontId, ProgressBar, RichText, Slider, TextStyle, ThemePreference,
 };
-use excel_processor::excel::{self, ProcessResult};
+// Предполагаем, что эти структуры объявлены в вашем модуле excel
+// ТАК НАДО:
+use excel_gui_app::excel::{self, ProcessResult};
 use std::path::PathBuf;
 use std::sync::mpsc::{self, Receiver, TryRecvError};
 use std::thread;
@@ -193,28 +195,35 @@ impl App {
 }
 
 impl eframe::App for App {
-    fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         self.poll_job();
         if self.busy {
-            ui.ctx().request_repaint();
+            ctx.request_repaint();
         }
 
-        egui::CentralPanel::default().show(ui, |ui| {
+        // В eframe метод называется `update` (раньше был `ui`), а панель объявляется здесь
+        egui::CentralPanel::default().show(ctx, |ui| {
             ui.add_space(8.0);
             ui.heading("Обработка Excel");
             ui.add_space(4.0);
             ui.label("Программа найдёт таблицу, добавит столбцы «ФИО» и «Л/с» и сохранит новый файл.");
             ui.add_space(12.0);
 
+            // Слайдер изменения шрифта
+            let old_font_size = self.font_size;
             ui.add(
                 Slider::new(&mut self.font_size, 12.0..=28.0)
                     .text("Размер шрифта")
                     .integer(),
             );
-            apply_font_size(ui.ctx(), self.font_size);
+            // Применяем настройки шрифта только если ползунок сдвинулся (оптимизация)
+            if (self.font_size - old_font_size).abs() > 0.1 {
+                apply_font_size(ui.ctx(), self.font_size);
+            }
 
             ui.add_space(12.0);
 
+            // Кнопки управления
             ui.horizontal(|ui| {
                 let pick = ui.add_enabled(!self.busy, egui::Button::new("Выбрать файл"));
                 if pick.clicked() {
@@ -232,6 +241,7 @@ impl eframe::App for App {
 
             ui.add_space(12.0);
 
+            // Отображение пути выбранного файла
             if let Some(path) = &self.selected_file {
                 ui.label(RichText::new("Файл:").strong());
                 ui.label(path.display().to_string());
@@ -240,6 +250,8 @@ impl eframe::App for App {
             }
 
             ui.add_space(12.0);
+            
+            // Прогресс-бар
             ui.add(
                 ProgressBar::new(self.progress)
                     .text(&self.progress_text)
@@ -247,6 +259,7 @@ impl eframe::App for App {
             );
             ui.add_space(8.0);
 
+            // Статусный текст (ошибки подсвечиваются красным)
             let color = if self.status_is_error {
                 ui.visuals().error_fg_color
             } else {
