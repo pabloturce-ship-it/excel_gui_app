@@ -38,3 +38,13 @@ The executable will be generated at `target/release/excel_gui_app`.
 ## 📝 License
 
 This project is open-source and available under the MIT License.
+
+## ⚠️ Known Limitations
+
+- **Font Style Mismatch:** The core Excel reader (`calamine`) is designed purely for ultra-fast, high-performance data extraction and does not parse cell styles (fonts, colors, background fills, or custom borders) from the source file. As a result, the newly appended "ФИО" (Full Name) and "Л/с" (Account Number) columns will be generated using the standard Microsoft Excel default font style (typically *Calibri* or *Aptos*), which might visually differ from the custom styles used in your source spreadsheet's header.
+
+## ⚠️ Known Limitations
+
+- **Font Style Mismatch:** The core Excel reader (`calamine`) is designed purely for ultra-fast, high-performance data extraction and does not parse cell styles (fonts, colors, background fills, or custom borders) from the source file. As a result, the newly appended "ФИО" (Full Name) and "Л/с" (Account Number) columns will be generated using the standard Microsoft Excel default font style (typically *Calibri* or *Aptos*), which might visually differ from the custom styles used in your source spreadsheet's header.
+- **Default Application Icon:** The application current executable uses the standard operating system default icon. Custom branding and window taskbar icons are not yet integrated into the release binary.
+
