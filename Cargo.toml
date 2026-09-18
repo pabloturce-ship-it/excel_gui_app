@@ -1,0 +1,13 @@
+[package]
+name = "excel_processor"
+version = "0.1.0"
+edition = "2021"
+description = "Минимальная программа: выбрать Excel-файл, дополнить таблицу столбцами ФИО и Л/с"
+
+[dependencies]
+calamine = "0.36"
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+eframe = "0.36"
+regex = "1"
+rfd = "0.17"
+rust_xlsxwriter = "0.97"
