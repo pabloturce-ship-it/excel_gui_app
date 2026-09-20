@@ -93,31 +93,51 @@ fn process_sheet(
 
     let mut processed = 0usize;
     let mut skipped = 0usize;
+    
+    // Флаг, нашли ли мы строку заголовка (которая содержит знак №)
+    let mut header_found = false;
 
     for (offset, row) in range.rows().enumerate() {
         let excel_row = start_row + offset as u32;
 
+        // 1. Сначала просто копируем текущие ячейки строки
         for (col_offset, cell) in row.iter().enumerate() {
             let excel_col = start_col as u16 + col_offset as u16;
             write_cell(worksheet, excel_row, excel_col, cell)
                 .map_err(|err| format!("Не удалось записать ячейку: {err}"))?;
         }
 
+        // 2. Если заголовок еще не найден, проверяем, не текущая ли это строка
+        if !header_found {
+            // Ищем, есть ли в строке ячейка, содержащая знак "№"
+            let has_number_sign = row.iter()
+                .map(cell_to_text)
+                .any(|text| text.contains('№') || text.contains("No."));
+
+            if has_number_sign {
+                header_found = true;
+                // Записываем заголовки новых колонок строго в эту строку
+                worksheet
+                    .write_string_with_format(excel_row, fio_col, "ФИО", header_format)
+                    .map_err(|err| format!("Не удалось записать заголовки: {err}"))?;
+                worksheet
+                    .write_string_with_format(excel_row, ls_col, "Л/с", header_format)
+                    .map_err(|err| format!("Не удалось записать заголовки: {err}"))?;
+                skipped += 1;
+                on_row();
+                continue;
+            } else {
+                // Это технические строки над таблицей — просто пропускаем их обработку
+                skipped += 1;
+                on_row();
+                continue;
+            }
+        }
+
+        // 3. Если мы дошли сюда, значит мы уже ниже строки заголовка — обрабатываем данные
         let extracted = last_filled_cell(row)
             .map(cell_to_text)
             .and_then(|text| extract_account_and_name(&text));
-
-        if offset == 0 && extracted.is_none() {
-            worksheet
-                .write_string_with_format(excel_row, fio_col, "ФИО", header_format)
-                .map_err(|err| format!("Не удалось записать заголовки: {err}"))?;
-            worksheet
-                .write_string_with_format(excel_row, ls_col, "Л/с", header_format)
-                .map_err(|err| format!("Не удалось записать заголовки: {err}"))?;
-            skipped += 1;
-            on_row();
-            continue;
-        }
 
         match extracted {
             Some(data) => {
